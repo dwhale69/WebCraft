@@ -148,10 +148,7 @@ export const AIPageBuilder: React.FC<PageBuilderProps> = ({ onSubmit }) => {
 
                 const response = await fetch('/api/upload', {
                     method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-ACCESS-KEY': '123saacxvsdaffadgasgag'
-                    }
+                    body: formData
                 });
 
                 if (!response.ok) {

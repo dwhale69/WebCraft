@@ -2,6 +2,11 @@
 
 An AI-powered web design agent that dynamically generates web pages and provides real-time interactive editing capabilities for each component.
 
+## Demo
+<a href="https://www.youtube.com/watch?v=RVpkhKiDSg4" target="_blank">
+  View demo
+</a>
+
 ## Installation
 
 ### Prerequisites
