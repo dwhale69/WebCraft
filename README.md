@@ -2,6 +2,11 @@
 
 An AI-powered web design agent that dynamically generates web pages and provides real-time interactive editing capabilities for each component.
 
+## Documentation
+
+- English (current)
+- [中文文档](https://github.com/mggger/WebCraft/blob/main/docs/README_zh.md)
+
 ## Demo
 <a href="https://www.youtube.com/watch?v=RVpkhKiDSg4" target="_blank">
   View demo
