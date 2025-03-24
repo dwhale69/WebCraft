@@ -1,0 +1,22 @@
+name = "agent-learning"
+main = "./src/server/server.ts"
+compatibility_date = "2025-02-21"
+
+assets = { directory = "public" }
+
+[[durable_objects.bindings]]
+name  = "layout-design-agent"
+class_name = "LayoutDesign"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["LayoutDesign"]
+
+[[r2_buckets]]
+binding = 'R2_BUCKET'
+bucket_name = 'images'
+
+
+[vars]
+ANTHROPIC_API_KEY="sk-xxx"
+R2_ENDPOINT_URL="https://R2.xxx"
