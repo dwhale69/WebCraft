@@ -9,7 +9,7 @@
 
 ## 安装
 
-### 前提条件
+### 依赖
 
 - Cloudflare 账户（用于 R2 存储和部署）
 - Anthropic API 密钥（用于访问 Claude AI 模型）
