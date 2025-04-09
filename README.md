@@ -2,6 +2,9 @@
 
 An AI-powered web design agent that dynamically generates web pages and provides real-time interactive editing capabilities for each component.
 
+
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/mggger/WebCraft)
+
 ## Documentation
 
 - English (current)
