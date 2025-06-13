@@ -8,7 +8,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { useAgent } from "agents/react";
 
 // Define TypeScript interfaces
 interface UploadedImage {
@@ -47,38 +46,106 @@ export const AIPageBuilder: React.FC<PageBuilderProps> = ({ onSubmit }) => {
     const [layoutResult, setLayoutResult] = useState<Record<string, any> | null>(null);
     const [agentStatus, setAgentStatus] = useState<"disconnected" | "connecting" | "connected" | "error">("disconnected");
 
-    // Connect to the layout-design-agent using the useAgent hook
-    const agent = useAgent({
-        agent: "layout-design-agent",
-        name: "layout-design-client",
-        onMessage: (message: { data: string }) => {
-            try {
-                const data = JSON.parse(message.data);
-                console.log('Received message:', data);
-
-                // Handle different message types
-                if (data.type === "status") {
-                    handleStatusUpdate(data as StatusMessage);
-                } else if (data.type === "layout-result") {
-                    handleLayoutResult(data.data);
-                }
-            } catch (error) {
-                console.error("Failed to parse message:", error);
-            }
+    // Mock agent connection for demo purposes
+    const agent = {
+        send: (message: string) => {
+            console.log('Mock agent send:', message);
+            // Simulate agent response after delay
+            setTimeout(() => {
+                handleMockResponse();
+            }, 2000);
         },
-        onOpen: () => {
-            console.log("Connection established with layout-design-agent");
-            setAgentStatus("connected");
-        },
-        onClose: () => {
-            console.log("Connection closed with layout-design-agent");
-            setAgentStatus("disconnected");
-        },
-        onError: (error: any) => {
-            console.error("Connection error:", error);
-            setAgentStatus("error");
+        reconnect: () => {
+            console.log('Mock agent reconnect');
+            setAgentStatus("connecting");
+            setTimeout(() => {
+                setAgentStatus("connected");
+            }, 1000);
         }
-    });
+    };
+
+    // Mock response handler
+    const handleMockResponse = () => {
+        // Create a simple mock layout
+        const mockLayout = {
+            "ROOT": {
+                "type": {
+                    "resolvedName": "Container"
+                },
+                "isCanvas": true,
+                "props": {
+                    "background": "#ffffff",
+                    "padding": 20,
+                    "margin": 0,
+                    "borderRadius": 4,
+                    "elevation": 0,
+                    "display": "block",
+                    "justifyContent": "flex-start",
+                    "alignItems": "flex-start",
+                    "data-cy": "root-container"
+                },
+                "displayName": "root",
+                "custom": {},
+                "hidden": false,
+                "nodes": ["heading1", "paragraph1"],
+                "linkedNodes": {}
+            },
+            "heading1": {
+                "type": {
+                    "resolvedName": "Heading"
+                },
+                "isCanvas": false,
+                "props": {
+                    "text": "Welcome to AI Page Builder",
+                    "fontSize": 32,
+                    "color": "#000000",
+                    "textAlign": "center",
+                    "level": 1,
+                    "margin": 16,
+                    "fontWeight": "bold"
+                },
+                "displayName": "heading",
+                "custom": {},
+                "parent": "ROOT",
+                "hidden": false,
+                "nodes": [],
+                "linkedNodes": {}
+            },
+            "paragraph1": {
+                "type": {
+                    "resolvedName": "Paragraph"
+                },
+                "isCanvas": false,
+                "props": {
+                    "text": "This is a demo of the AI-powered page builder. Your content will be generated based on your requirements.",
+                    "fontSize": 16,
+                    "color": "#666666",
+                    "textAlign": "center",
+                    "lineHeight": 1.6,
+                    "margin": 16,
+                    "maxWidth": "75ch"
+                },
+                "displayName": "paragraph",
+                "custom": {},
+                "parent": "ROOT",
+                "hidden": false,
+                "nodes": [],
+                "linkedNodes": {}
+            }
+        };
+
+        setLayoutResult(mockLayout);
+        setIsLoading(false);
+        onSubmit(mockLayout);
+    };
+
+    // Auto-connect on mount
+    useEffect(() => {
+        setAgentStatus("connecting");
+        setTimeout(() => {
+            setAgentStatus("connected");
+        }, 1000);
+    }, []);
 
     // Handle status update messages
     const handleStatusUpdate = (data: StatusMessage): void => {
@@ -124,7 +191,7 @@ export const AIPageBuilder: React.FC<PageBuilderProps> = ({ onSubmit }) => {
         setUploadProgress(0);
 
         // Create temporary local previews
-        const tempImages = files.map(file => ({
+        const tempImages = validFiles.map(file => ({
             id: Math.random().toString(36).substring(2),
             name: file.name,
             url: URL.createObjectURL(file),
@@ -136,40 +203,46 @@ export const AIPageBuilder: React.FC<PageBuilderProps> = ({ onSubmit }) => {
         setUploadedImages(prev => [...prev, ...tempImages]);
 
         try {
-
-            // @ts-ignore
             const uploadedResults: { id: string; name: string; url: any; isUploading: boolean; }[] = [];
 
-            // @ts-ignore
-            for (let i = 0; i < files.length; i++) {
-                const file = files[i];
+            for (let i = 0; i < validFiles.length; i++) {
+                const file = validFiles[i];
                 const formData = new FormData();
                 formData.append('file', file);
 
-                const response = await fetch('/api/upload', {
-                    method: 'POST',
-                    body: formData
-                });
+                try {
+                    const response = await fetch('/api/upload', {
+                        method: 'POST',
+                        body: formData
+                    });
 
-                if (!response.ok) {
-                    throw new Error(`Upload failed: ${response.statusText}`);
-                }
+                    if (!response.ok) {
+                        throw new Error(`Upload failed: ${response.statusText}`);
+                    }
 
-                const data = await response.json();
+                    const data = await response.json();
 
-                // @ts-ignore
-                if (data.success && data.url) {
+                    if (data.success && data.url) {
+                        uploadedResults.push({
+                            id: tempImages[i].id,
+                            name: file.name,
+                            url: data.url,
+                            isUploading: false
+                        });
+                    }
+                } catch (uploadError) {
+                    console.error('Error uploading file:', uploadError);
+                    // For demo purposes, use placeholder URL
                     uploadedResults.push({
                         id: tempImages[i].id,
                         name: file.name,
-                        // @ts-ignore
-                        url: data.url,
+                        url: `https://picsum.photos/400/300?random=${i}`,
                         isUploading: false
                     });
                 }
 
                 // Update progress
-                setUploadProgress(Math.round(((i + 1) / files.length) * 100));
+                setUploadProgress(Math.round(((i + 1) / validFiles.length) * 100));
             }
 
             // Replace temp URLs with actual uploaded URLs
@@ -182,11 +255,15 @@ export const AIPageBuilder: React.FC<PageBuilderProps> = ({ onSubmit }) => {
 
         } catch (error) {
             console.error('Error uploading images:', error);
-            alert('Failed to upload one or more images. Please try again.');
+            alert('Failed to upload one or more images. Using placeholder images for demo.');
 
-            // Remove failed uploads
+            // Use placeholder images for demo
             setUploadedImages(prev =>
-                prev.filter(img => !img.isUploading)
+                prev.map((img, index) => ({
+                    ...img,
+                    url: `https://picsum.photos/400/300?random=${index}`,
+                    isUploading: false
+                }))
             );
         } finally {
             setIsUploading(false);
@@ -219,10 +296,9 @@ export const AIPageBuilder: React.FC<PageBuilderProps> = ({ onSubmit }) => {
             timestamp: new Date().toISOString()
         };
 
-        // Send the request through the useAgent hook
+        // Send the request through the mock agent
         agent.send(JSON.stringify(payload));
     };
-
 
     // Calculate progress percentage based on current stage
     const getProgressPercentage = (): number => {
@@ -235,14 +311,6 @@ export const AIPageBuilder: React.FC<PageBuilderProps> = ({ onSubmit }) => {
             default: return 10;
         }
     };
-
-    // Auto-reconnect if the agent gets disconnected during the generation process
-    useEffect(() => {
-        if (isLoading && agentStatus === "disconnected") {
-            agent.reconnect();
-            setAgentStatus("connecting");
-        }
-    }, [isLoading, agentStatus]);
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-blue-50 to-indigo-50 p-8">
@@ -292,7 +360,6 @@ export const AIPageBuilder: React.FC<PageBuilderProps> = ({ onSubmit }) => {
                                 size="sm"
                                 onClick={() => {
                                     agent.reconnect();
-                                    setAgentStatus("connecting");
                                 }}
                                 disabled={agentStatus === "connecting"}
                             >

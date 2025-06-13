@@ -88,6 +88,7 @@ export default function App() {
 
     // Handle AI generation submission
     const handleAiSubmission = (jsonData: Record<string, any>): void => {
+        console.log('AI submission received:', jsonData);
         setGeneratedJson(jsonData);
         setShowAiBuilder(false);
     };
@@ -105,6 +106,19 @@ export default function App() {
             description: "Your design has been updated."
         });
     };
+
+    // Add error boundary
+    useEffect(() => {
+        const handleError = (event: ErrorEvent) => {
+            console.error('Application error:', event.error);
+            toast.error("Application Error", {
+                description: "An error occurred. Please refresh the page."
+            });
+        };
+
+        window.addEventListener('error', handleError);
+        return () => window.removeEventListener('error', handleError);
+    }, []);
 
     return (
         <>
@@ -214,8 +228,12 @@ const EditorContent: React.FC<EditorContentProps> = ({
     useEffect(() => {
         if (generatedJson && actions) {
             try {
+                console.log('Loading generated JSON:', generatedJson);
                 const jsonString = JSON.stringify(generatedJson);
                 actions.deserialize(jsonString);
+                toast.success("Design loaded successfully", {
+                    description: "AI-generated design has been loaded into the editor."
+                });
             } catch (error) {
                 console.error("Error loading generated JSON:", error);
                 toast.error("Error Loading Design", {
